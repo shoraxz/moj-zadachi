@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="description" content="Мои задачи — удобный список дел с синхронизацией между iPhone и MacBook">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Мои задачи</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-icon">✓</span><div><strong>Мои задачи</strong><small>Планируй спокойно</small></div></div>
+    <nav id="sideNav">
+      <button class="nav-item active" data-filter="all">▦ <span>Все задачи</span><b id="allCount">0</b></button>
+      <button class="nav-item" data-filter="today">☀ <span>На сегодня</span><b id="todayCount">0</b></button>
+      <button class="nav-item" data-filter="upcoming">◷ <span>Предстоящие</span></button>
+      <button class="nav-item" data-filter="overdue">! <span>Просроченные</span><b id="overdueCount">0</b></button>
+      <button class="nav-item" data-filter="done">✓ <span>Выполненные</span></button>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="nav-item" id="exportBtn">⇩ <span>Экспорт CSV</span></button>
+      <button class="nav-item" id="settingsBtn">⚙ <span>Синхронизация</span><i id="syncDot" class="sync-dot"></i></button>
+      <div class="sidebar-note">Данные хранятся на этом устройстве, пока не подключена синхронизация.</div>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div><p class="eyebrow" id="todayLabel">МОЙ ПЛАН</p><h1 id="pageTitle">Все задачи</h1></div>
+      <div class="top-actions"><div id="cloudStatus" class="cloud-status">● Только на устройстве</div><button class="primary-btn" id="newTaskBtn">＋ Новая задача</button></div>
+    </header>
+    <section class="stats">
+      <article class="stat-card"><span>Всего задач</span><strong id="statTotal">0</strong><small>В вашем списке</small></article>
+      <article class="stat-card"><span>На сегодня</span><strong id="statToday">0</strong><small>Запланировано</small></article>
+      <article class="stat-card"><span>Выполнено</span><strong id="statDone">0</strong><small id="donePercent">0% от всех задач</small></article>
+      <article class="stat-card"><span>Просрочено</span><strong id="statLate">0</strong><small>Требуют внимания</small></article>
+    </section>
+    <section class="toolbar">
+      <label class="searchbox">⌕ <input id="searchInput" placeholder="Поиск по задачам…" autocomplete="off"></label>
+      <select id="categoryFilter" aria-label="Фильтр по проекту"><option value="">Все проекты</option></select>
+      <select id="priorityFilter" aria-label="Фильтр по приоритету"><option value="">Любой приоритет</option><option value="high">Высокий</option><option value="medium">Средний</option><option value="low">Низкий</option></select>
+      <select id="sortFilter" aria-label="Сортировка"><option value="due">По сроку</option><option value="created">Сначала новые</option><option value="priority">По приоритету</option></select>
+    </section>
+    <section class="content-grid">
+      <div class="task-panel">
+        <div class="section-heading"><div><h2 id="listHeading">Список задач</h2><p id="listSubheading">Сосредоточьтесь на следующем шаге</p></div><span id="visibleCount" class="count-pill">0 задач</span></div>
+        <div id="taskList" class="task-list"></div>
+        <div id="emptyState" class="empty-state"><div class="empty-illustration">✓</div><h3>Здесь пока пусто</h3><p>Добавьте задачу, чтобы превратить план в действие.</p><button class="primary-btn" id="emptyAddBtn">＋ Добавить задачу</button></div>
+      </div>
+      <aside class="right-panel">
+        <div class="section-heading"><div><h2>Ближайшие сроки</h2><p>Что требует внимания</p></div></div>
+        <div id="upcomingList" class="upcoming-list"></div>
+        <div class="tip-card"><div class="tip-icon">✦</div><strong>Маленький шаг — тоже прогресс</strong><p>Выберите одну важную задачу и начните с неё.</p></div>
+        <div class="project-card"><div class="section-heading"><div><h2>Проекты</h2><p>Группировка по направлениям</p></div><button id="addProjectBtn" class="icon-btn" aria-label="Добавить проект">＋</button></div><div id="projectList" class="project-list"></div></div>
+      </aside>
+    </section>
+    <footer>«Мои задачи» · данные синхронизируются между устройствами только после подключения облака.</footer>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="taskModal" hidden>
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head"><div><p class="eyebrow">ВАШ ПЛАН</p><h2 id="modalTitle">Новая задача</h2></div><button class="icon-btn close-modal" aria-label="Закрыть">×</button></div>
+    <form id="taskForm">
+      <input type="hidden" id="taskId">
+      <label class="field full">Название задачи *<input id="taskTitle" required maxlength="180" placeholder="Например, подготовить список покупок"></label>
+      <label class="field full">Описание / заметки<textarea id="taskNotes" rows="3" placeholder="Подробности, ссылки, следующий шаг…"></textarea></label>
+      <div class="form-row">
+        <label class="field">Проект<select id="taskCategory"></select></label>
+        <label class="field">Приоритет<select id="taskPriority"><option value="high">Высокий</option><option value="medium" selected>Средний</option><option value="low">Низкий</option></select></label>
+      </div>
+      <div class="form-row">
+        <label class="field">Срок выполнения<input id="taskDue" type="date"></label>
+        <label class="field">Статус<select id="taskStatus"><option value="todo">К выполнению</option><option value="doing">В работе</option><option value="done">Выполнена</option></select></label>
+      </div>
+      <div class="modal-actions"><button type="button" class="text-btn" id="deleteTaskBtn" hidden>Удалить задачу</button><span class="spacer"></span><button type="button" class="secondary-btn close-modal">Отмена</button><button class="primary-btn" type="submit">Сохранить</button></div>
+    </form>
+  </section>
+</div>
+
+<div class="modal-backdrop" id="settingsModal" hidden>
+  <section class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-head"><div><p class="eyebrow">НАСТРОЙКА</p><h2 id="settingsTitle">Синхронизация</h2></div><button class="icon-btn close-modal" aria-label="Закрыть">×</button></div>
+    <div class="sync-explainer"><div class="sync-symbol">⇄</div><div><strong id="syncHeading">Подключите облако</strong><p>Один и тот же список задач на iPhone и MacBook. Для этого понадобится бесплатный проект Supabase.</p></div></div>
+    <div id="syncCurrent" class="notice">Сейчас данные сохраняются только в браузере на этом устройстве. Чтобы включить синхронизацию, создайте проект Supabase и заполните поля ниже.</div>
+    <form id="settingsForm">
+      <label class="field full">URL проекта Supabase<input id="supabaseUrl" type="url" placeholder="https://xxxxxxxx.supabase.co" autocomplete="url"></label>
+      <label class="field full">Publishable key / anon key<input id="supabaseKey" type="password" placeholder="sb_publishable_… или anon key" autocomplete="off"></label>
+      <p class="help-text">Используйте только publishable/anon ключ. Никогда не вставляйте service_role или secret key в приложение.</p>
+      <div id="authFields">
+        <label class="field full">Электронная почта<input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email"></label>
+        <label class="field full">Пароль<input id="authPassword" type="password" minlength="6" placeholder="Минимум 6 символов" autocomplete="current-password"></label>
+      </div>
+      <div class="form-row">
+        <button type="button" id="signInBtn" class="secondary-btn">Войти</button>
+        <button type="button" id="signUpBtn" class="secondary-btn">Создать аккаунт</button>
+      </div>
+      <div class="form-row">
+        <button type="button" id="signOutBtn" class="text-btn" hidden>Выйти из аккаунта</button>
+        <span class="spacer"></span><button type="button" id="saveConfigBtn" class="secondary-btn">Сохранить настройки</button>
+      </div>
+      <div id="syncMessage" class="sync-message" role="status"></div>
+    </form>
+    <details class="setup-details"><summary>Как подключить облако?</summary>
+      <ol>
+        <li>Откройте <a href="https://supabase.com/" target="_blank" rel="noreferrer">supabase.com</a> и создайте проект.</li>
+        <li>В проекте откройте SQL Editor, вставьте весь код из файла <code>supabase-schema.sql</code> из архива приложения и нажмите Run.</li>
+        <li>В настройках API проекта скопируйте Project URL и publishable key (или anon key) в поля выше.</li>
+        <li>Создайте аккаунт с электронной почтой и паролем. При включённом подтверждении почты сначала подтвердите адрес.</li>
+        <li>Повторите вход на втором устройстве с теми же настройками и аккаунтом.</li>
+      </ol>
+    </details>
+    <div class="modal-actions"><span class="spacer"></span><button type="button" class="secondary-btn close-modal">Закрыть</button></div>
+  </section>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+</body>
+</html>

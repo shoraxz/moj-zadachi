@@ -1,0 +1,22 @@
+{
+  "name": "Мои задачи",
+  "short_name": "Задачи",
+  "description": "Планирование задач с синхронизацией между устройствами",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f6fa",
+  "theme_color": "#171b2c",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "productivity",
+    "utilities"
+  ]
+}
